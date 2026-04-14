@@ -28,6 +28,15 @@ import { DifficultyTier } from '../models';
       <section class="hero">
         <h1>Master the Algorithm.</h1>
         <p>Forge your logic skills through increasingly difficult challenges designed for Senior Engineers.</p>
+        <div style="margin-top: 2rem;">
+          <a routerLink="/playground" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-weight: 800; font-size: 0.9rem; padding: 0.75rem 1.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 17l6-6-6-6"></path><path d="M12 19h8"></path>
+            </svg>
+            OPEN FREE PLAYGROUND
+            <div class="btn-glow"></div>
+          </a>
+        </div>
       </section>
 
       <div class="tiers-container">

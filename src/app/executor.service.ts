@@ -16,7 +16,10 @@ export class ExecutorService {
       
       // Basic worker for JS execution
       const workerCode = `
+        self.onmessage = function(e) {
+          const { code, testCases } = e.data;
           const logs = [];
+          const results = [];
           // Redirigimos console.log para capturarlo
           const originalLog = self.console.log;
           self.console.log = (...args) => {
@@ -36,7 +39,7 @@ export class ExecutorService {
             
             const userFunc = self[funcName];
             
-            if (typeof userFunc !== 'function') {
+            if (testCases && testCases.length > 0 && typeof userFunc !== 'function') {
                 throw new Error("No function found: Ensure your function name matches the regex (/function name/).");
             }
 
@@ -84,9 +87,11 @@ export class ExecutorService {
         clearTimeout(timeout);
         worker.terminate();
         if (e.data.error) {
+            const logs = e.data.logs || [];
+            logs.push(`RUNTIME_ERROR: ${e.data.error}`);
             resolve({ 
               results: testCases.map(t => ({ passed: false, error: e.data.error, expected: t.expected })), 
-              logs: e.data.logs || [] 
+              logs: logs 
             });
         } else {
             resolve({ results: e.data.results, logs: e.data.logs || [] });
@@ -126,8 +131,10 @@ export class ExecutorService {
     });
 
     try {
-        const funcName = code.match(/def\s+([a-zA-Z0-9_]+)/)?.[1];
-        if (!funcName) throw new Error("No function definition found (def ...)");
+        const funcName = code.match(/def\\s+([a-zA-Z0-9_]+)/)?.[1];
+        if (testCases && testCases.length > 0 && !funcName) {
+            throw new Error("No function definition found (def ...)");
+        }
 
         await this.pyodide.runPythonAsync(code);
 
@@ -163,6 +170,7 @@ export class ExecutorService {
             }
         }
     } catch (globalErr: any) {
+        logs.push(`RUNTIME_ERROR: ${globalErr.message}`);
         return { 
           results: testCases.map(t => ({ passed: false, error: globalErr.message, expected: t.expected })), 
           logs 
