@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,105 +6,113 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { ExerciseService } from '../exercise.service';
 import { ExecutorService } from '../executor.service';
 import { ProgressService } from '../progress.service';
-import { Exercise, DifficultyTier } from '../models';
+import { Exercise } from '../models';
 
 @Component({
   selector: 'app-exercise',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, MonacoEditorModule],
   template: `
-    <div class="header">
+    <header class="header glass-header">
       <div class="flex-row">
-        <a routerLink="/" class="back-link">← Dojo</a>
-        <div class="ex-title-header">{{ exercise()?.title }}</div>
+        <a routerLink="/" class="back-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="ex-meta-header">
+          <span class="tier-badge">TIER {{ exercise()?.tier }}</span>
+          <h1 class="ex-title-header">{{ exercise()?.title }}</h1>
+        </div>
       </div>
       <div class="flex-row">
-        <select [(ngModel)]="language" class="lang-select">
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python</option>
-        </select>
+        <div class="control-group glass">
+          <select [(ngModel)]="language" class="lang-select">
+            <option value="javascript">JAVASCRIPT</option>
+            <option value="python">PYTHON</option>
+          </select>
+        </div>
         <button class="btn btn-primary" (click)="runTests()" [disabled]="isRunning()">
-          {{ isRunning() ? 'Running...' : 'Run Code' }}
+          <span class="btn-text">{{ isRunning() ? 'EXECUTING...' : 'RUN TESTS' }}</span>
         </button>
       </div>
-    </div>
+    </header>
 
-    <div class="player-container">
-      <!-- Left Panel: Description -->
-      <div class="side-panel description-panel">
-        <div class="panel-header">Problem Overview</div>
-        <div class="panel-content">
-          <h2 style="margin-top: 0;">{{ exercise()?.title }}</h2>
-          <div class="badge" [style.background]="getTierColor(exercise()?.tier)">Tier {{ exercise()?.tier }}</div>
-          <div class="description-text">
-            {{ exercise()?.description }}
-          </div>
-          
-          <h3>Examples</h3>
-          <div class="example">
+    <div class="ide-container">
+      <!-- Description Pane -->
+      <div class="pane description-pane glass">
+        <div class="pane-header">PROBLEM_STATEMENT</div>
+        <div class="pane-content">
+          <div class="scroll-area">
+            <div class="description-text">{{ exercise()?.description }}</div>
+            
+            <div class="divider"></div>
+            
+            <div class="section-title">TEST_CASES</div>
             @for (test of visibleTests(); track $index) {
-              <div class="example-box">
-                <strong>Input:</strong> <code>{{ formatInput(test.input) }}</code><br>
-                <strong>Output:</strong> <code>{{ JSON.stringify(test.expected) }}</code>
+              <div class="example-item glass">
+                <div class="example-label">CASE_0{{ $index + 1 }}</div>
+                <div class="example-data">
+                  <span class="data-label">INPUT:</span> <code>{{ formatInput(test.input) }}</code>
+                </div>
+                <div class="example-data">
+                  <span class="data-label">EXPECTED:</span> <code>{{ JSON.stringify(test.expected) }}</code>
+                </div>
               </div>
             }
           </div>
         </div>
       </div>
 
-      <!-- Right Panel: Editor + Results -->
-      <div class="main-panel">
-        <div class="editor-wrapper">
-          <ngx-monaco-editor 
-            [options]="editorOptions" 
-            [(ngModel)]="code"
-            (onInit)="onEditorInit($event)"
-            style="height: 100%; width: 100%;">
-          </ngx-monaco-editor>
+      <!-- Editor & Console Pane -->
+      <div class="pane editor-pane">
+        <div class="editor-section">
+          <div class="pane-header">SOURCE_CODE.{{ language === 'javascript' ? 'JS' : 'PY' }}</div>
+          <div class="editor-inner">
+            <ngx-monaco-editor 
+              [options]="editorOptions" 
+              [(ngModel)]="code"
+              style="height: 100%; width: 100%; min-height: 500px; display: block;">
+            </ngx-monaco-editor>
+          </div>
         </div>
 
-        <div class="results-panel" [class.expanded]="results().length > 0">
-          <div class="panel-header flex-row">
-            <span>Test Results</span>
+        <div class="console-section glass" [class.expanded]="results().length > 0">
+          <div class="pane-header flex-row">
+            <span>CONSOLE_OUTPUT</span>
             @if (results().length > 0) {
-              <span class="results-summary" [class.all-passed]="allPassed()">
-                {{ passedCount() }} / {{ results().length }} Passed
+              <span class="status-indicator" [class.success]="allPassed()">
+                {{ passedCount() }}/{{ results().length }} TESTS PASSED
               </span>
             }
           </div>
-          <div class="panel-content results-list">
+          <div class="console-content">
             @if (isRunning()) {
-              <div class="loader">Executing tests...</div>
+              <div class="console-msg animate-pulse">Running diagnostics...</div>
             } @else if (results().length > 0) {
               @for (res of results(); track $index) {
-                <div class="result-item" [class.passed]="res.passed" [class.failed]="!res.passed">
-                  <div class="res-head">
-                    <span class="status-dot"></span>
-                    <span>Test Case {{ $index + 1 }}</span>
-                    <span class="res-time" *ngIf="res.time">{{ res.time.toFixed(2) }}ms</span>
-                  </div>
+                <div class="test-row" [class.passed]="res.passed">
+                  <span class="row-status">{{ res.passed ? 'PASS' : 'FAIL' }}</span>
+                  <span class="row-label">TEST_0{{ $index + 1 }}</span>
                   @if (!res.passed) {
-                    <div class="res-details">
-                      @if (res.error) {
-                        <div class="error-msg">{{ res.error }}</div>
-                      } @else {
-                        <div>Expected: <code>{{ JSON.stringify(res.expected) }}</code></div>
-                        <div>Actual: <code>{{ JSON.stringify(res.actual) }}</code></div>
-                      }
+                    <div class="row-err">
+                      {{ res.error ? 'RUNTIME_ERROR: ' + res.error : 'VALUE_MISMATCH: Got ' + JSON.stringify(res.actual) }}
                     </div>
+                  } @else {
+                    <span class="row-time">{{ res.time?.toFixed(2) }}ms</span>
                   }
                 </div>
               }
-              
-              @if (allPassed() && !isSaving()) {
-                <div class="success-banner animate-slide-up">
-                  <h3>Exercise Mastered!</h3>
-                  <p>You earned +{{ exercise()?.xpValue }} XP</p>
-                  <button class="btn btn-primary" routerLink="/">Return to Dojo</button>
+
+              @if (allPassed()) {
+                <div class="victory-overlay animate-fade-in">
+                  <div class="victory-card glass">
+                    <h2>EXERCISE_MASTERED</h2>
+                    <p>+{{ exercise()?.xpValue }} XP REWARDED</p>
+                    <button class="btn btn-primary" routerLink="/">RETURN_TO_DOJO</button>
+                  </div>
                 </div>
               }
             } @else {
-                <div class="placeholder">Run your code to see results</div>
+              <div class="console-placeholder">Waiting for execution...</div>
             }
           </div>
         </div>
@@ -112,111 +120,106 @@ import { Exercise, DifficultyTier } from '../models';
     </div>
   `,
   styles: [`
-    .player-container {
+    .flex-row { display: flex; align-items: center; gap: 1.5rem; }
+    .back-link { color: var(--text-secondary); transition: var(--transition); }
+    .back-link:hover { color: var(--neon-indigo); }
+    
+    .ex-meta-header { display: flex; flex-direction: column; gap: 0.2rem; }
+    .tier-badge { font-family: var(--font-mono); font-size: 0.7rem; color: var(--neon-indigo); font-weight: 800; }
+    .ex-title-header { margin: 0; font-size: 1.25rem; font-weight: 800; }
+    
+    .control-group { padding: 0.25rem 0.5rem; border-radius: 6px; }
+    .lang-select { border: none; background: transparent; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+
+    .ide-container {
       display: flex;
-      height: calc(100vh - 64px);
+      height: calc(100vh - 70px);
+      background: var(--bg-deep);
+    }
+    
+    .pane { display: flex; flex-direction: column; }
+    .pane-header {
+      padding: 0.6rem 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-glass);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .description-pane { width: 450px; border-right: none; }
+    .pane-content { flex: 1; overflow: hidden; position: relative; }
+    .scroll-area { height: 100%; overflow-y: auto; padding: 2rem; }
+    
+    .description-text { font-size: 1.05rem; line-height: 1.7; color: var(--text-primary); margin-bottom: 2rem; }
+    .section-title { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 800; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    
+    .divider { height: 1px; background: var(--border-glass); margin: 2rem 0; }
+    
+    .example-item {
+      padding: 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    .example-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--neon-indigo); margin-bottom: 0.75rem; }
+    .example-data { font-size: 0.85rem; margin-bottom: 0.4rem; font-family: var(--font-mono); }
+    .data-label { color: var(--text-muted); margin-right: 0.5rem; }
+    code { color: var(--neon-fuchsia); }
+
+    .editor-pane { flex: 1; border-left: 1px solid var(--border-glass); }
+    .editor-section { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .editor-inner { flex: 1; background: #010409; }
+
+    .console-section {
+      height: 60px;
+      transition: height 0.3s ease-in-out;
       overflow: hidden;
     }
-    .side-panel {
-      width: 400px;
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-color);
-    }
-    .panel-header {
-      padding: 0.75rem 1.25rem;
-      background: var(--surface-header);
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-color);
-    }
-    .panel-content {
-      padding: 1.5rem;
-      flex: 1;
-      overflow-y: auto;
-    }
-    .description-text {
-        white-space: pre-wrap;
-        line-height: 1.6;
-        margin-top: 1rem;
-        color: var(--text-primary);
-    }
-    .main-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #1e1e1e; /* Monaco dark background */
-    }
-    .editor-wrapper {
-      flex: 1;
-      min-height: 200px;
-    }
-    .results-panel {
-      height: 60px;
-      border-top: 1px solid var(--border-color);
-      background: var(--surface-color);
-      transition: height 0.3s ease;
-      display: flex;
-      flex-direction: column;
-    }
-    .results-panel.expanded {
-      height: 300px;
-    }
-    .results-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .flex-row { display: flex; align-items: center; gap: 1rem; }
-    .back-link { color: var(--text-secondary); text-decoration: none; font-weight: bold; }
-    .back-link:hover { color: var(--accent-primary); }
-    .ex-title-header { font-weight: 700; font-size: 1.1rem; }
-    .lang-select {
-        background: var(--surface-color);
-        color: white;
-        border: 1px solid var(--border-color);
-        padding: 0.4rem;
-        border-radius: 4px;
-    }
-    .example-box {
-        background: var(--surface-color);
-        padding: 0.75rem;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-    }
-    code { color: var(--accent-secondary); background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 3px; }
+    .console-section.expanded { height: 350px; }
     
-    .result-item {
-        border-left: 4px solid #ccc;
-        padding: 0.75rem;
-        background: rgba(255,255,255,0.02);
+    .status-indicator { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 800; color: var(--danger); margin-left: auto; }
+    .status-indicator.success { color: var(--neon-emerald); }
+
+    .console-content { padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; overflow-y: auto; height: calc(100% - 35px); }
+    .console-placeholder { color: var(--text-muted); display: flex; justify-content: center; align-items: center; height: 100%; }
+    
+    .test-row {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-glass);
+      display: grid;
+      grid-template-columns: 60px 100px 1fr;
+      align-items: flex-start;
     }
-    .result-item.passed { border-color: var(--success); }
-    .result-item.failed { border-color: var(--danger); }
-    .res-head { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
-    .passed .status-dot { background: var(--success); box-shadow: 0 0 5px var(--success); }
-    .failed .status-dot { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
-    .res-time { font-size: 0.75rem; color: var(--text-secondary); margin-left: auto; }
-    .res-details { margin-top: 0.5rem; font-size: 0.8rem; font-family: var(--font-mono); background: rgba(0,0,0,0.3); padding: 0.5rem; }
-    .error-msg { color: var(--danger); }
-    .results-summary { font-weight: bold; color: var(--danger); }
-    .results-summary.all-passed { color: var(--success); }
-    .success-banner {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        padding: 1.5rem;
-        border-radius: 8px;
-        text-align: center;
-        margin-top: 1rem;
+    .test-row.passed .row-status { color: var(--neon-emerald); }
+    .test-row:not(.passed) .row-status { color: var(--danger); }
+    .row-status { font-weight: 800; }
+    .row-label { color: var(--text-secondary); }
+    .row-err { color: var(--danger); font-size: 0.75rem; grid-column: 1 / span 3; margin-top: 0.5rem; background: rgba(239, 68, 68, 0.05); padding: 0.5rem; border-radius: 4px; }
+    .row-time { color: var(--text-muted); text-align: right; }
+
+    .victory-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(2, 4, 10, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
     }
-    .success-banner h3 { margin: 0; font-size: 1.5rem; }
-    .placeholder { color: var(--text-secondary); text-align: center; padding: 2rem; }
+    .victory-card {
+      padding: 3rem;
+      text-align: center;
+      border-radius: 20px;
+      border: 1px solid var(--neon-emerald);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+    }
+    .victory-card h2 { margin: 0; font-size: 2rem; color: #fff; }
+    .victory-card p { color: var(--neon-emerald); font-weight: 800; margin: 1rem 0 2rem; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse { animation: pulse 1.5s infinite; }
   `]
 })
 export class ExerciseComponent implements OnInit {
@@ -236,6 +239,13 @@ export class ExerciseComponent implements OnInit {
   editorOptions = {
     theme: 'vs-dark',
     language: 'javascript',
+    fontSize: 14,
+    fontFamily: "'JetBrains Mono', monospace",
+    lineHeight: 1.5,
+    padding: { top: 20 },
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
     suggestOnTriggerCharacters: false,
     quickSuggestions: false,
     snippetSuggestions: 'none',
@@ -260,11 +270,6 @@ export class ExerciseComponent implements OnInit {
           this.code = ex.initialCode[lang] || '';
       }
     }
-  }
-
-  onEditorInit(editor: any) {
-      // Additional safety to disable suggestions
-      // editor.updateOptions({ ... })
   }
 
   getTierColor(tier?: number): string {
@@ -303,7 +308,6 @@ export class ExerciseComponent implements OnInit {
       if (!ex) return;
       
       this.isSaving.set(true);
-      // Simulate small delay for impact
       setTimeout(() => {
           const codeMap = { [this.language]: this.code };
           this.progressService.completeExercise(ex.id, ex.xpValue, ex.tier, 0, codeMap);

@@ -10,47 +10,65 @@ import { DifficultyTier } from '../models';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="header">
-      <div class="logo">Code Dojo</div>
-      <div class="user-stats">
-        <span class="badge" [style.background]="'var(--accent-primary)'">XP: {{ progressService.totalXp() }}</span>
-        <span class="badge" [style.background]="'var(--accent-secondary)'">{{ progressService.currentRank() }}</span>
+    <header class="header glass-header">
+      <div class="logo">CODE_DOJO</div>
+      <div class="user-info">
+        <div class="stat-pill glass">
+          <span class="label">RANK</span>
+          <span class="value">{{ progressService.currentRank() }}</span>
+        </div>
+        <div class="stat-pill glass">
+          <span class="label">XP</span>
+          <span class="value">{{ progressService.totalXp() }}</span>
+        </div>
       </div>
-    </div>
+    </header>
 
-    <div class="container animate-slide-up" style="margin-top: 2rem; padding-bottom: 4rem;">
-      <div class="hero">
-        <h1>Devour Code Challenges</h1>
-        <p>Master technical interviews by solving increasingly difficult logic exercises.</p>
-      </div>
+    <main class="container animate-fade-in">
+      <section class="hero">
+        <h1>Master the Algorithm.</h1>
+        <p>Forge your logic skills through increasingly difficult challenges designed for Senior Engineers.</p>
+      </section>
 
-      <div class="tiers-grid">
+      <div class="tiers-container">
         @for (tier of tiers; track tier) {
-          <div class="tier-section" [class.locked]="!isTierUnlocked(tier)">
-            <div class="tier-header">
-              <h2>Tier {{ tier }} — {{ getTierName(tier) }}</h2>
-              <div class="tier-progress">
-                <span>{{ getTierProgress(tier) }}% Complete</span>
-                <div class="progress-bar-bg">
-                  <div class="progress-bar-fill" [style.width.%]="getTierProgress(tier)"></div>
+          <div class="tier-block" [class.locked]="!isTierUnlocked(tier)">
+            <div class="tier-meta">
+              <div class="tier-identity">
+                <span class="tier-num">TIER 0{{ tier }}</span>
+                <h2 class="tier-name">{{ getTierName(tier) }}</h2>
+              </div>
+              <div class="tier-stats">
+                <span class="progress-text">{{ getTierProgress(tier) }}% COMPLETE</span>
+                <div class="progress-track glass">
+                  <div class="progress-fill" [style.width.%]="getTierProgress(tier)"></div>
                 </div>
               </div>
             </div>
 
-            <div class="exercises-list">
+            <div class="exercise-grid">
               @for (ex of exerciseService.getExercisesByTier(tier); track ex.id) {
                 <a [routerLink]="isTierUnlocked(tier) ? ['/exercise', ex.id] : null" 
-                   class="exercise-card" 
+                   class="ex-card glass" 
                    [class.completed]="isCompleted(ex.id)"
                    [class.locked]="!isTierUnlocked(tier)">
-                  <div class="ex-info">
-                    <span class="ex-title">{{ ex.title }}</span>
-                    <span class="ex-xp">+{{ ex.xpValue }} XP</span>
+                  <div class="ex-status">
+                    @if (isCompleted(ex.id)) {
+                      <div class="dot active"></div>
+                    } @else if (!isTierUnlocked(tier)) {
+                      <div class="dot locked"></div>
+                    } @else {
+                      <div class="dot inactive"></div>
+                    }
+                  </div>
+                  <div class="ex-body">
+                    <h3 class="ex-title">{{ ex.title }}</h3>
+                    <div class="ex-meta">
+                      <span class="ex-xp">+{{ ex.xpValue }} XP</span>
+                    </div>
                   </div>
                   @if (isCompleted(ex.id)) {
-                    <span class="check-icon">✓</span>
-                  } @else if (!isTierUnlocked(tier)) {
-                    <span class="lock-icon">🔒</span>
+                    <div class="completion-tag">MASTERED</div>
                   }
                 </a>
               }
@@ -58,110 +76,108 @@ import { DifficultyTier } from '../models';
           </div>
         }
       </div>
-    </div>
+    </main>
   `,
   styles: [`
+    .user-info { display: flex; gap: 1rem; }
+    .stat-pill {
+      padding: 0.4rem 1rem;
+      border-radius: 99px;
+      display: flex;
+      gap: 0.8rem;
+      font-size: 0.8rem;
+    }
+    .stat-pill .label { color: var(--text-secondary); font-weight: 600; }
+    .stat-pill .value { color: var(--neon-indigo); font-weight: 800; font-family: var(--font-mono); }
+
     .hero {
+      padding: 6rem 0;
       text-align: center;
-      margin-bottom: 3rem;
     }
     .hero h1 {
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      font-size: 4.5rem;
+      margin: 0;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
     }
     .hero p {
-        color: var(--text-secondary);
-        font-size: 1.2rem;
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      max-width: 600px;
+      margin: 1.5rem auto 0;
     }
-    .tiers-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 3rem;
-    }
-    .tier-header {
+
+    .tiers-container { display: flex; flex-direction: column; gap: 6rem; padding-bottom: 10rem; }
+    .tier-meta {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      border-left: 4px solid var(--accent-primary);
-      padding-left: 1rem;
+      align-items: flex-end;
+      margin-bottom: 2rem;
     }
-    .tier-header h2 {
-      margin: 0;
-      font-size: 1.5rem;
+    .tier-num {
+      font-family: var(--font-mono);
+      color: var(--neon-indigo);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
     }
-    .tier-progress {
-      text-align: right;
-      width: 200px;
-    }
-    .tier-progress span {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-    }
-    .progress-bar-bg {
-      height: 6px;
-      background: var(--surface-color);
-      border-radius: 3px;
-      margin-top: 4px;
+    .tier-name { margin: 0.2rem 0 0; font-size: 2.5rem; text-transform: uppercase; }
+    
+    .tier-stats { width: 300px; text-align: right; }
+    .progress-text { font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; }
+    .progress-track {
+      height: 4px;
+      margin-top: 0.75rem;
+      border-radius: 2px;
       overflow: hidden;
     }
-    .progress-bar-fill {
+    .progress-fill {
       height: 100%;
-      background: var(--accent-primary);
-      box-shadow: var(--neon-glow);
-      transition: width 0.5s ease-out;
+      background: var(--neon-indigo);
+      box-shadow: 0 0 10px var(--neon-indigo);
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .exercises-list {
+
+    .exercise-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
     }
-    .exercise-card {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      padding: 1rem;
-      border-radius: 8px;
+    .ex-card {
+      padding: 1.5rem;
+      border-radius: 12px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      gap: 1.25rem;
       text-decoration: none;
       color: inherit;
-      transition: all 0.2s ease;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
     }
-    .exercise-card:hover:not(.locked) {
-      transform: translateY(-4px);
-      border-color: var(--accent-primary);
-      background: var(--surface-header);
+    .ex-card:hover:not(.locked) {
+      transform: scale(1.02);
+      border-color: var(--neon-indigo);
+      background: rgba(99, 102, 241, 0.05);
     }
-    .exercise-card.completed {
-      border-color: var(--success);
-      background: rgba(16, 185, 129, 0.05);
-    }
-    .exercise-card.locked {
-      opacity: 0.5;
-      cursor: not-allowed;
-      filter: grayscale(1);
-    }
-    .ex-info {
-        display: flex;
-        flex-direction: column;
-    }
-    .ex-title {
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    .ex-xp {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-    .check-icon { color: var(--success); font-weight: bold; }
-    .lock-icon { font-size: 1rem; }
-    .tier-section.locked {
-        opacity: 0.6;
+    .ex-card.locked { opacity: 0.4; cursor: not-allowed; }
+    
+    .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 0.5rem; }
+    .dot.active { background: var(--neon-emerald); box-shadow: 0 0 8px var(--neon-emerald); }
+    .dot.inactive { background: var(--text-muted); }
+    .dot.locked { background: var(--danger); }
+
+    .ex-title { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .ex-meta { margin-top: 0.4rem; display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
+    .completion-tag {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--neon-emerald);
+      letter-spacing: 0.1em;
     }
   `]
 })

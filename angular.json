@@ -26,8 +26,8 @@
               },
               {
                 "glob": "**/*",
-                "input": "./node_modules/monaco-editor/min/vs",
-                "output": "/assets/monaco/vs"
+                "input": "node_modules/monaco-editor/min/vs",
+                "output": "assets/monaco"
               }
             ],
             "styles": ["src/styles.css"]

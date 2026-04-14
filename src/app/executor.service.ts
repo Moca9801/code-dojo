@@ -21,19 +21,18 @@ export class ExecutorService {
           const results = [];
           
           try {
-            // Evaluamos el código del usuario
-            // Nota: Esto crea la función en el scope del worker
-            eval(code);
+            // Evaluamos el código del usuario en el scope global del worker
+            self.eval(code);
             
-            // Buscamos el nombre de la función (asumimos que es la primera definida o coincide con el caso)
-            // Para ser más robustos, podríamos forzar un nombre o buscarlo
-            const funcName = code.match(/function\s+([a-zA-Z0-9_]+)/)?.[1] || 
-                             code.match(/const\s+([a-zA-Z0-9_]+)\s*=/)?.[1];
+            const funcName = code.match(/function\\s+([a-zA-Z0-9_]+)/)?.[1] || 
+                             code.match(/const\\s+([a-zA-Z0-9_]+)\\s*=/)?.[1] ||
+                             code.match(/let\\s+([a-zA-Z0-9_]+)\\s*=/)?.[1] ||
+                             code.match(/var\\s+([a-zA-Z0-9_]+)\\s*=/)?.[1];
             
             const userFunc = self[funcName];
             
             if (typeof userFunc !== 'function') {
-                throw new Error("No function found in code. Make sure you defined a function.");
+                throw new Error("No function found: Ensure your function name matches the regex (/function name/).");
             }
 
             for (const test of testCases) {
@@ -50,7 +49,7 @@ export class ExecutorService {
                   time: end - start,
                   error: null
                 });
-              } catch (err: any) {
+              } catch (err) {
                 results.push({
                   passed: false,
                   actual: null,
@@ -60,7 +59,7 @@ export class ExecutorService {
               }
             }
             self.postMessage({ results });
-          } catch (globalErr: any) {
+          } catch (globalErr) {
             self.postMessage({ error: globalErr.message });
           }
         };

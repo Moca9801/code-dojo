@@ -9,7 +9,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(), 
     provideRouter(routes),
     provideMonacoEditor({
-      baseUrl: 'assets/monaco',
+      baseUrl: '/assets/monaco',
       defaultOptions: {
         scrollBeyondLastLine: false,
         fontSize: 14,
