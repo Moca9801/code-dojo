@@ -10,16 +10,21 @@ export class ExecutorService {
 
   constructor() {}
 
-  async runJavascript(code: string, testCases: any[]): Promise<any[]> {
+  async runJavascript(code: string, testCases: any[]): Promise<{results: any[], logs: string[]}> {
     return new Promise((resolve) => {
       const results: any[] = [];
       
       // Basic worker for JS execution
       const workerCode = `
-        self.onmessage = function(e) {
-          const { code, testCases } = e.data;
-          const results = [];
-          
+          const logs = [];
+          // Redirigimos console.log para capturarlo
+          const originalLog = self.console.log;
+          self.console.log = (...args) => {
+            logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+            // También lo mostramos en la consola real para debug
+            originalLog(...args);
+          };
+
           try {
             // Evaluamos el código del usuario en el scope global del worker
             self.eval(code);
@@ -38,7 +43,6 @@ export class ExecutorService {
             for (const test of testCases) {
               const start = performance.now();
               try {
-                // Clonamos el input para evitar mutaciones entre tests
                 const input = JSON.parse(JSON.stringify(test.input));
                 const output = userFunc(...input);
                 const end = performance.now();
@@ -58,9 +62,9 @@ export class ExecutorService {
                 });
               }
             }
-            self.postMessage({ results });
+            self.postMessage({ results, logs });
           } catch (globalErr) {
-            self.postMessage({ error: globalErr.message });
+            self.postMessage({ error: globalErr.message, logs });
           }
         };
       `;
@@ -70,16 +74,22 @@ export class ExecutorService {
 
       const timeout = setTimeout(() => {
         worker.terminate();
-        resolve(testCases.map(t => ({ passed: false, error: 'Execution Timeout (3s)', expected: t.expected })));
+        resolve({ 
+          results: testCases.map(t => ({ passed: false, error: 'Execution Timeout (3s)', expected: t.expected })), 
+          logs: [] 
+        });
       }, 3000);
 
       worker.onmessage = (e) => {
         clearTimeout(timeout);
         worker.terminate();
         if (e.data.error) {
-            resolve(testCases.map(t => ({ passed: false, error: e.data.error, expected: t.expected })));
+            resolve({ 
+              results: testCases.map(t => ({ passed: false, error: e.data.error, expected: t.expected })), 
+              logs: e.data.logs || [] 
+            });
         } else {
-            resolve(e.data.results);
+            resolve({ results: e.data.results, logs: e.data.logs || [] });
         }
       };
 
@@ -105,13 +115,17 @@ export class ExecutorService {
     }
   }
 
-  async runPython(code: string, testCases: any[]): Promise<any[]> {
+  async runPython(code: string, testCases: any[]): Promise<{results: any[], logs: string[]}> {
     await this.loadPyodide();
     const results: any[] = [];
+    const logs: string[] = [];
+    
+    // Configurar captura de stdout
+    this.pyodide.setStdout({
+      batched: (s: string) => logs.push(s)
+    });
 
     try {
-        // En Python, el usuario define una función. 
-        // Necesitamos llamarla para cada test case.
         const funcName = code.match(/def\s+([a-zA-Z0-9_]+)/)?.[1];
         if (!funcName) throw new Error("No function definition found (def ...)");
 
@@ -149,9 +163,12 @@ export class ExecutorService {
             }
         }
     } catch (globalErr: any) {
-        return testCases.map(t => ({ passed: false, error: globalErr.message, expected: t.expected }));
+        return { 
+          results: testCases.map(t => ({ passed: false, error: globalErr.message, expected: t.expected })), 
+          logs 
+        };
     }
 
-    return results;
+    return { results, logs };
   }
 }

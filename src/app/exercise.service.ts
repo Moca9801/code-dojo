@@ -14,8 +14,8 @@ export class ExerciseService {
       tier: 1,
       xpValue: 100,
       initialCode: {
-        javascript: 'function reverseString(s) {\n  // your code here\n}',
-        python: 'def reverse_string(s):\n    # your code here\n'
+        javascript: '// Initialize example\nconst input = ["h","e","l","l","o"];\n\nfunction reverseString(s) {\n  // your code here\n}\n\n// Test in playground\nconst result = reverseString(input);\nconsole.log("Result:", result);',
+        python: '# Initialize example\ninput_val = ["h","e","l","l","o"]\n\ndef reverse_string(s):\n    # your code here\n    pass\n\n# Test in playground\nresult = reverse_string(input_val)\nprint(f"Result: {result}")'
       },
       testCases: [
         { input: [['h','e','l','l','o']], expected: ['o','l','l','e','h'] },
@@ -29,8 +29,8 @@ export class ExerciseService {
       tier: 1,
       xpValue: 100,
       initialCode: {
-        javascript: 'function fizzBuzz(n) {\n  // your code here\n}',
-        python: 'def fizz_buzz(n):\n    # your code here\n'
+        javascript: 'const n = 15;\n\nfunction fizzBuzz(n) {\n  // your code here\n}\n\nconsole.log("FizzBuzz for 15:", fizzBuzz(n));',
+        python: 'n = 15\n\ndef fizz_buzz(n):\n    # your code here\n    pass\n\nprint(f"FizzBuzz for 15: {fizz_buzz(n)}")'
       },
       testCases: [
         { input: [3], expected: ["1","2","Fizz"] },
@@ -44,8 +44,8 @@ export class ExerciseService {
       tier: 1,
       xpValue: 120,
       initialCode: {
-        javascript: 'function isPalindrome(s) {\n  // your code here\n}',
-        python: 'def is_palindrome(s):\n    # your code here\n'
+        javascript: 'const s = "race a car";\n\nfunction isPalindrome(s) {\n  // your code here\n}\n\nconsole.log(`Is "${s}" a palindrome?`, isPalindrome(s));',
+        python: 's = "race a car"\n\ndef is_palindrome(s):\n    # your code here\n    pass\n\nprint(f"Is \'{s}\' a palindrome? {is_palindrome(s)}")'
       },
       testCases: [
         { input: ["A man, a plan, a canal: Panama"], expected: true },
@@ -59,14 +59,15 @@ export class ExerciseService {
         tier: 1,
         xpValue: 150,
         initialCode: {
-          javascript: 'function twoSum(nums, target) {\n  // your code here\n}',
-          python: 'def two_sum(nums, target):\n    # your code here\n'
+          javascript: 'const nums = [2, 7, 11, 15];\nconst target = 9;\n\nfunction twoSum(nums, target) {\n  // your code here\n}\n\nconsole.log("Indices:", twoSum(nums, target));',
+          python: 'nums = [2, 7, 11, 15]\ntarget = 9\n\ndef two_sum(nums, target):\n    # your code here\n    pass\n\nprint(f"Indices: {two_sum(nums, target)}")'
         },
         testCases: [
           { input: [[2,7,11,15], 9], expected: [0,1] },
           { input: [[3,2,4], 6], expected: [1,2] }
         ]
     },
+    // ... rest of tiered exercises
     {
         id: 'move-zeroes',
         title: 'Move Zeroes',
@@ -181,8 +182,8 @@ export class ExerciseService {
       tier: 2,
       xpValue: 300,
       initialCode: {
-        javascript: 'function maxSubArray(nums) {\n  // your code here\n}',
-        python: 'def max_sub_array(nums):\n    # your code here\n'
+        javascript: 'const nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4];\n\nfunction maxSubArray(nums) {\n  // your code here\n}\n\nconsole.log(`Max sum of ${JSON.stringify(nums)}:`, maxSubArray(nums));',
+        python: 'nums = [-2,1,-3,4,-1,2,1,-5,4]\n\ndef max_sub_array(nums):\n    # your code here\n    pass\n\nprint(f"Max sum: {max_sub_array(nums)}")'
       },
       testCases: [
         { input: [[-2,1,-3,4,-1,2,1,-5,4]], expected: 6 },
@@ -196,8 +197,8 @@ export class ExerciseService {
         tier: 2,
         xpValue: 280,
         initialCode: {
-          javascript: 'function rotate(nums, k) {\n  // your code here\n  return nums;\n}',
-          python: 'def rotate(nums, k):\n    # your code here\n    return nums\n'
+          javascript: 'const nums = [1, 2, 3, 4, 5, 6, 7];\nconst k = 3;\n\nfunction rotate(nums, k) {\n  // your code here\n  return nums;\n}\n\nconsole.log(`Rotated ${k} times:`, rotate(nums, k));',
+          python: 'nums = [1, 2, 3, 4, 5, 6, 7]\nk = 3\n\ndef rotate(nums, k):\n    # your code here\n    return nums\n\nprint(f"Rotated: {rotate(nums, k)}")'
         },
         testCases: [
           { input: [[1,2,3,4,5,6,7], 3], expected: [5,6,7,1,2,3,4] }
@@ -210,8 +211,8 @@ export class ExerciseService {
         tier: 2,
         xpValue: 350,
         initialCode: {
-          javascript: 'function groupAnagrams(strs) {\n  // your code here\n}',
-          python: 'def group_anagrams(strs):\n    # your code here\n'
+          javascript: 'const strs = ["eat", "tea", "tan", "ate", "nat", "bat"];\n\nfunction groupAnagrams(strs) {\n  // your code here\n}\n\nconsole.log("Groups:", groupAnagrams(strs));',
+          python: 'strs = ["eat", "tea", "tan", "ate", "nat", "bat"]\n\ndef group_anagrams(strs):\n    # your code here\n    pass\n\nprint(f"Groups: {group_anagrams(strs)}")'
         },
         testCases: [
           { input: [["eat","tea","tan","ate","nat","bat"]], expected: [["eat","tea","ate"],["tan","nat"],["bat"]] }
@@ -224,8 +225,8 @@ export class ExerciseService {
         tier: 2,
         xpValue: 320,
         initialCode: {
-          javascript: 'function topKFrequent(nums, k) {\n  // your code here\n}',
-          python: 'def top_k_frequent(nums, k):\n    # your code here\n'
+          javascript: 'const nums = [1, 1, 1, 2, 2, 3];\nconst k = 2;\n\nfunction topKFrequent(nums, k) {\n  // your code here\n}\n\nconsole.log(`Top ${k} frequent:`, topKFrequent(nums, k));',
+          python: 'nums = [1,1,1,2,2,3]\nk = 2\n\ndef top_k_frequent(nums, k):\n    # your code here\n    pass\n\nprint(f"Top {k}: {top_k_frequent(nums, k)}")'
         },
         testCases: [
           { input: [[1,1,1,2,2,3], 2], expected: [1,2] }
@@ -238,8 +239,8 @@ export class ExerciseService {
         tier: 2,
         xpValue: 400,
         initialCode: {
-          javascript: 'function threeSum(nums) {\n  // your code here\n}',
-          python: 'def three_sum(nums):\n    # your code here\n'
+          javascript: 'const nums = [-1, 0, 1, 2, -1, -4];\n\nfunction threeSum(nums) {\n  // your code here\n}\n\nconsole.log("3Sum Triplets:", threeSum(nums));',
+          python: 'nums = [-1,0,1,2,-1,-4]\n\ndef three_sum(nums):\n    # your code here\n    pass\n\nprint(f"3Sum: {three_sum(nums)}")'
         },
         testCases: [
           { input: [[-1,0,1,2,-1,-4]], expected: [[-1,-1,2],[-1,0,1]] }

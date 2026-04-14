@@ -25,7 +25,7 @@ import { Exercise } from '../models';
       </div>
       <div class="flex-row">
         <div class="control-group glass">
-          <select [(ngModel)]="language" class="lang-select">
+          <select [(ngModel)]="language" (ngModelChange)="onLanguageChange()" class="lang-select">
             <option value="javascript">JAVASCRIPT</option>
             <option value="python">PYTHON</option>
           </select>
@@ -87,19 +87,34 @@ import { Exercise } from '../models';
           <div class="console-content">
             @if (isRunning()) {
               <div class="console-msg animate-pulse">Running diagnostics...</div>
-            } @else if (results().length > 0) {
-              @for (res of results(); track $index) {
-                <div class="test-row" [class.passed]="res.passed">
-                  <span class="row-status">{{ res.passed ? 'PASS' : 'FAIL' }}</span>
-                  <span class="row-label">TEST_0{{ $index + 1 }}</span>
-                  @if (!res.passed) {
-                    <div class="row-err">
-                      {{ res.error ? 'RUNTIME_ERROR: ' + res.error : 'VALUE_MISMATCH: Got ' + JSON.stringify(res.actual) }}
+            } @else if (results().length > 0 || logs().length > 0) {
+              @if (logs().length > 0) {
+                <div class="logs-section">
+                  <div class="section-divider">DEBUG_LOGS</div>
+                  @for (log of logs(); track $index) {
+                    <div class="log-line">
+                      <span class="log-arrow">></span> {{ log }}
                     </div>
-                  } @else {
-                    <span class="row-time">{{ res.time?.toFixed(2) }}ms</span>
                   }
                 </div>
+                <div class="divider" style="margin: 1rem 0;"></div>
+              }
+
+              @if (results().length > 0) {
+                <div class="section-divider">TEST_RESULTS</div>
+                @for (res of results(); track $index) {
+                  <div class="test-row" [class.passed]="res.passed">
+                    <span class="row-status">{{ res.passed ? 'PASS' : 'FAIL' }}</span>
+                    <span class="row-label">TEST_0{{ $index + 1 }}</span>
+                    @if (!res.passed) {
+                      <div class="row-err">
+                        {{ res.error ? 'RUNTIME_ERROR: ' + res.error : 'VALUE_MISMATCH: Got ' + JSON.stringify(res.actual) }}
+                      </div>
+                    } @else {
+                      <span class="row-time">{{ res.time?.toFixed(2) }}ms</span>
+                    }
+                  </div>
+                }
               }
 
               @if (allPassed()) {
@@ -184,6 +199,22 @@ import { Exercise } from '../models';
     .console-content { padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; overflow-y: auto; height: calc(100% - 35px); }
     .console-placeholder { color: var(--text-muted); display: flex; justify-content: center; align-items: center; height: 100%; }
     
+    .section-divider {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 0.25rem;
+    }
+    .log-line {
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-all;
+    }
+    .log-arrow { color: var(--neon-indigo); margin-right: 0.5rem; }
+
     .test-row {
       padding: 0.75rem;
       border-bottom: 1px solid var(--border-glass);
@@ -233,6 +264,7 @@ export class ExerciseComponent implements OnInit {
   language = 'javascript';
   code = '';
   results = signal<any[]>([]);
+  logs = signal<string[]>([]);
   isRunning = signal(false);
   isSaving = signal(false);
 
@@ -266,9 +298,22 @@ export class ExerciseComponent implements OnInit {
       const ex = this.exerciseService.getExerciseById(id);
       this.exercise.set(ex);
       if (ex) {
-          const lang = this.language as keyof typeof ex.initialCode;
-          this.code = ex.initialCode[lang] || '';
+          this.loadInitialCode();
       }
+    }
+  }
+
+  onLanguageChange() {
+    this.loadInitialCode();
+    // Re-create options to force Monaco refresh
+    this.editorOptions = { ...this.editorOptions, language: this.language };
+  }
+
+  loadInitialCode() {
+    const ex = this.exercise();
+    if (ex) {
+      const lang = this.language as keyof typeof ex.initialCode;
+      this.code = ex.initialCode[lang] || '';
     }
   }
 
@@ -287,15 +332,17 @@ export class ExerciseComponent implements OnInit {
 
     this.isRunning.set(true);
     this.results.set([]);
+    this.logs.set([]);
 
-    let testResults: any[] = [];
+    let executionResponse: {results: any[], logs: string[]};
     if (this.language === 'javascript') {
-        testResults = await this.executorService.runJavascript(this.code, ex.testCases);
-    } else if (this.language === 'python') {
-        testResults = await this.executorService.runPython(this.code, ex.testCases);
+        executionResponse = await this.executorService.runJavascript(this.code, ex.testCases);
+    } else {
+        executionResponse = await this.executorService.runPython(this.code, ex.testCases);
     }
 
-    this.results.set(testResults);
+    this.results.set(executionResponse.results);
+    this.logs.set(executionResponse.logs);
     this.isRunning.set(false);
 
     if (this.allPassed()) {
